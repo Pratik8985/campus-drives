@@ -87,8 +87,6 @@ const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentDat
 
   const fetchMyDrives = useCallback(async (uid: string, reset = false) => {
     try {
-      setLoading(true);
-
       let q = query(
         collection(db, "drives"),
         where("postedBy", "==", uid),
@@ -121,6 +119,7 @@ const { id, ...dataWithoutId } = data;
           };
         })
       );
+            setLoading(false);
 
       if (reset) {
         setAllDrives(drives);
@@ -134,6 +133,8 @@ const { id, ...dataWithoutId } = data;
 
       const lastDoc = snapshot.docs[snapshot.docs.length - 1];
       setLastVisible(lastDoc);
+            setLoading(false);
+
     } catch (err) {
       console.error("Error fetching drives:", err);
     } finally {
@@ -287,15 +288,20 @@ const { id, ...dataWithoutId } = data;
   };
 
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
+  const auth = getAuth();
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    if (user) {
+      (async () => {
         setLastVisible(null);
-        fetchMyDrives(user.uid, true);
-      }
-    });
-    return () => unsubscribe();
-  }, [fetchMyDrives]);
+        await fetchMyDrives(user.uid, true);
+      })();
+    } else {
+      setLoading(false); // 🔁 ensure loading is turned off if no user
+    }
+  });
+  return () => unsubscribe();
+}, [fetchMyDrives]);
+
 
   return (
     <ProtectedRoute>
