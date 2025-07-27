@@ -6,7 +6,6 @@ import {
   getDocs,
   doc,
   updateDoc,
-  Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase/firebase'
 import DashboardLayout from '@/components/DashboardLayout'
@@ -20,7 +19,7 @@ import Loader from '@/components/Loader'
 
 
 
-const statusTabs = ['all', 'pending', 'open', 'rejected']
+const statusTabs = ['all', 'pending', 'open', 'rejected'] as const
 
 export default function AdminPage() {
       const [toast, setToast] = useState<{
@@ -120,7 +119,7 @@ export default function AdminPage() {
           {statusTabs.map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab)}
               className={`px-4 py-1 text-sm rounded-full transition whitespace-nowrap ${
                 activeTab === tab
                   ? 'bg-white shadow font-semibold text-gray-900'

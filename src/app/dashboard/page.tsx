@@ -1,7 +1,6 @@
 'use client'
 
 import { getAuth, signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase/firebase'
 import { useRouter } from 'next/navigation'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
@@ -9,13 +8,7 @@ export default function DashboardPage() {
   const router = useRouter()
 
 const auth = getAuth();
-const user = auth.currentUser;
 
-if (user) {
-  console.log("UID:", user.uid);
-  console.log("Name:", user.displayName);
-  console.log("Email:", user.email);
-}
   const handleLogout = async () => {
     try {
       await signOut(auth)

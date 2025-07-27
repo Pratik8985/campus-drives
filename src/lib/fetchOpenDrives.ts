@@ -1,12 +1,14 @@
 // lib/fetchOpenDrives.ts
-import { collection, getDocs, orderBy, query, limit, startAfter, where, Timestamp } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, limit, startAfter , DocumentSnapshot,
+  QueryDocumentSnapshot,
+  DocumentData,} from "firebase/firestore";
 import { db } from "./firebase/firebase";
 import { Drive } from "@/types/Drive";
 
 export const fetchOpenDrives = async (
   pageLimit = 6,
-  startAfterDoc?: any // Firebase DocumentSnapshot
-): Promise<{ drives: Drive[]; lastVisible: any }> => {
+  startAfterDoc?: DocumentSnapshot<DocumentData> // Firebase DocumentSnapshot
+): Promise<{ drives: Drive[]; lastVisible: QueryDocumentSnapshot<DocumentData> | null }> => {
   let q = query(
     collection(db, "drives"),
     orderBy("createdAt", "desc"),

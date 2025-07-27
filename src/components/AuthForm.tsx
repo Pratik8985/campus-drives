@@ -49,9 +49,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
       } else {
         setError('User record not found in Firestore.')
       }
-    } catch (err) {
-      setError('Failed to fetch user role.')
-    }
+    } catch {
+  setError('Failed to fetch user role.')
+}
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,9 +86,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
       const uid = userCredential.user.uid
       await redirectToRoleDashboard(uid)
-    } catch (err: any) {
-      setError(formatError(err.message))
-    } finally {
+    } catch (err: unknown) {
+  if (err instanceof Error) {
+    setError(formatError(err.message))
+  } else {
+    setError('An unexpected error occurred.')
+  }
+ } finally {
       setLoading(false)
     }
   }
@@ -107,9 +111,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
       } else {
         setError('Unable to retrieve user UID from Google account.')
       }
-    } catch (err: any) {
-      setError(formatError(err.message))
-    } finally {
+    } catch (err: unknown) {
+  if (err instanceof Error) {
+    setError(formatError(err.message))
+  } else {
+    setError('An unexpected error occurred.')
+  }
+ } finally {
       setLoading(false)
     }
   }
@@ -125,9 +133,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
     try {
       await sendPasswordResetEmail(auth, email)
       setMessage('Password reset email sent. Please check your inbox.')
-    } catch (err: any) {
-      setError(formatError(err.message))
-    } finally {
+    } catch (err: unknown) {
+  if (err instanceof Error) {
+    setError(formatError(err.message))
+  } else {
+    setError('An unexpected error occurred.')
+  }} finally {
       setLoading(false)
     }
   }

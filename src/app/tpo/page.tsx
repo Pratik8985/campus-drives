@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { FiMapPin, FiBriefcase, FiCalendar, FiUsers } from "react-icons/fi";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 // import { storage } from "@/lib/firebase/firebase";
 
 import { db } from "@/lib/firebase/firebase";
@@ -38,8 +38,8 @@ type DriveWithCount = Drive & {
 
 export default function TpoPage() {
   const [showModal, setShowModal] = useState(false);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [resumeUrl, setResumeUrl] = useState<string>("");
+  // const [pdfFile, setPdfFile] = useState<File | null>(null);
+  // const [resumeUrl, setResumeUrl] = useState<string>("");
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -58,8 +58,7 @@ export default function TpoPage() {
     type?: "success" | "error";
   } | null>(null);
 
-  const [lastVisible, setLastVisible] = useState<any>(null);
-  const [hasMore, setHasMore] = useState(true);
+const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const PAGE_SIZE = 5;
   const [editingDriveId, setEditingDriveId] = useState<string | null>(null);
   const [allDrives, setAllDrives] = useState<DriveWithCount[]>([]);
@@ -86,7 +85,7 @@ export default function TpoPage() {
     return snapshot.size;
   };
 
-  const fetchMyDrives = async (uid: string, reset = false) => {
+  const fetchMyDrives = useCallback(async (uid: string, reset = false) => {
     try {
       setLoading(true);
 
@@ -112,7 +111,8 @@ export default function TpoPage() {
       const drives = await Promise.all(
         snapshot.docs.map(async (docSnap) => {
           const data = docSnap.data() as Drive;
-          const { id: _ignoredId, ...dataWithoutId } = data;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+const { id, ...dataWithoutId } = data;
           const applicationCount = await fetchApplicationCount(docSnap.id);
           return {
             id: docSnap.id,
@@ -134,13 +134,12 @@ export default function TpoPage() {
 
       const lastDoc = snapshot.docs[snapshot.docs.length - 1];
       setLastVisible(lastDoc);
-      setHasMore(snapshot.docs.length === PAGE_SIZE);
     } catch (err) {
       console.error("Error fetching drives:", err);
     } finally {
       setLoading(false);
     }
-  };
+  },[lastVisible, allDrives]);
   const resetModal = () => {
     setShowModal(false);
     setEditingDriveId(null);
@@ -181,7 +180,7 @@ export default function TpoPage() {
     }
 
     try {
-      let uploadedUrl = "";
+      // const uploadedUrl = "";
       //   if (pdfFile) {
       //     const storageRef = ref(
       //       storage,
@@ -206,7 +205,7 @@ export default function TpoPage() {
         updatedAt: serverTimestamp(),
         companyName: formData.companyName || "",
         createdBy: user?.email?.split("@")[0] || "TPO",
-        ...(uploadedUrl ? { pdfUrl: uploadedUrl } : {}),
+        // ...(uploadedUrl ? { pdfUrl: uploadedUrl } : {}),
       };
 
       if (editingDriveId) {
@@ -229,6 +228,7 @@ export default function TpoPage() {
         const docSnap = await getDoc(docRef);
         const newDriveData = docSnap.data() as Drive;
         const applicationCount = await fetchApplicationCount(docRef.id);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id: _ignoreId, ...safeDriveData } = newDriveData;
 
         setAllDrives((prev) => [
@@ -295,7 +295,7 @@ export default function TpoPage() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [fetchMyDrives]);
 
   return (
     <ProtectedRoute>
@@ -467,7 +467,7 @@ export default function TpoPage() {
             <button
               key={status}
               onClick={() => {
-                setFilterStatus(status as any);
+                setFilterStatus(status as "all" | "open" | "closed");
                 const uid = getAuth().currentUser?.uid;
                 if (uid) fetchMyDrives(uid, true);
               }}

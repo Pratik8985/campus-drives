@@ -5,6 +5,7 @@ import { fetchOpenDrives } from "@/lib/fetchOpenDrives";
 import { Drive } from "@/types/Drive";
 import { applyToDrive } from "@/lib/applyToDrive";
 import DashboardLayout from "@/components/DashboardLayout";
+import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { fetchAppliedDrives } from "@/lib/fetchAppliedDrives";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import {
@@ -28,8 +29,8 @@ export default function StudentPage() {
   const uniqueLocations = [...new Set(drives.map((d) => d.location || "N/A"))];
   const [applied, setApplied] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
-  const [lastDoc, setLastDoc] = useState<any | null>(null);
-  const [prevDocs, setPrevDocs] = useState<any[]>([]);
+const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+const [prevDocs, setPrevDocs] = useState<QueryDocumentSnapshot<DocumentData>[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const { user } = useAuth();
   const PAGE_SIZE = 6;
@@ -73,8 +74,7 @@ useEffect(() => {
 
       if (direction === "prev") {
         const prev = [...prevDocs];
-        const prevDoc = prev.pop();
-        setPrevDocs(prev);
+          setPrevDocs(prev);
         const { drives, lastVisible } = await fetchOpenDrives(
           PAGE_SIZE,
           prev[prev.length - 1]
@@ -85,7 +85,7 @@ useEffect(() => {
         return;
       }
 
-      const { drives, lastVisible } = await fetchOpenDrives(PAGE_SIZE, lastDoc);
+      const { drives, lastVisible } = await fetchOpenDrives(PAGE_SIZE, lastDoc?? undefined);
       if (lastDoc) setPrevDocs((prev) => [...prev, lastDoc]);
       setDrives(drives);
       setLastDoc(lastVisible);
@@ -108,9 +108,22 @@ useEffect(() => {
       message: "Application submitted successfully!",
       type: "success",
     });
-  } catch (error: any) {
-    alert(error.message);
-  } finally {
+  } catch (error) {
+  if (error instanceof Error) {
+    setToast({
+      id: Date.now(),
+      message: error.message,
+      type: "error",
+    });
+  } else {
+    setToast({
+      id: Date.now(),
+      message: "Something went wrong while applying.",
+      type: "error",
+    });
+  }
+}
+ finally {
     setIsApplying(false);
   }
 };
